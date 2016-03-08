@@ -41,8 +41,8 @@ void nufft_cosfilter(hls::stream< T > nufftIn[C],
 
 // This is after FFT
 template <int C, typename T>
-void nufft_cosfilter1024(hls::stream< T > nufftIn[C],
-					 hls::stream< T > nufftOut[C]) {
+void nufft_cosfilter1024(hls::stream< T > &nufftIn,
+					 hls::stream< T > &nufftOut) {
 	int k=0;
 #pragma HLS inline off
 	//const int sK = COSINVTAB_SIZE/nL;
@@ -53,26 +53,26 @@ void nufft_cosfilter1024(hls::stream< T > nufftIn[C],
 	for(int i=0;i<256;i++) {
 #pragma HLS PIPELINE rewind
 		t_input_scalar invCosVal = cosInvTab[i];
-		for(int c=0;c<C;c++) {
-			T val = nufftIn[c].read();
+		//for(int c=0;c<C;c++) {
+			T val = nufftIn.read();
 			T valOut( val.real() * invCosVal, val.imag() * invCosVal );
-			nufftOut[c].write(valOut);
-		}
+			nufftOut.write(valOut);
+		//}
 	}
 	for(int i=0;i<512;i++) {
 #pragma HLS PIPELINE rewind
-		for(int c=0;c<C;c++) {
-			T val = nufftIn[c].read();
-		}
+		//for(int c=0;c<C;c++) {
+			T val = nufftIn.read();
+	//	}
 	}
 	for(int i=0;i<256;i++) {
 #pragma HLS PIPELINE rewind
 		t_input_scalar invCosVal = cosInvTab[i + 256];
-		for(int c=0;c<C;c++) {
-			T val = nufftIn[c].read();
+		//for(int c=0;c<C;c++) {
+			T val = nufftIn.read();
 			T valOut( val.real() * invCosVal, val.imag() * invCosVal );
-			nufftOut[c].write(valOut);
-		}
+			nufftOut.write(valOut);
+		//}
 	}
 }
 
