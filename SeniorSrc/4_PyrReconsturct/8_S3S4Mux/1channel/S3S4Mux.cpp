@@ -1,8 +1,8 @@
 #include "../common_type.h"
 // I won't do a template now.
 template < int NUMIN>
-void S3S4Mux(hls::stream< t_recon_complex>  S3Out[NUMIN][3],
-			 hls::stream< t_recon_complex>  DFTOut[3]) {
+void S3S4Mux(hls::stream< t_recon_complex>  S3Out[NUMIN],
+			 hls::stream< t_recon_complex>  &DFTOut) {
 
 #pragma HLS DATAFLOW
 #pragma HLS INLINE
@@ -17,16 +17,16 @@ void S3S4Mux(hls::stream< t_recon_complex>  S3Out[NUMIN][3],
 			//t_nufft_output_complex   T0;
 			//t_nufft_output_complex   T1;
 			//t_nufft_output_complex   T2;
-			DFTOut[0].write( S3Out[inputC][0].read());
-			DFTOut[1].write( S3Out[inputC][1].read());
-			DFTOut[2].write( S3Out[inputC][2].read());
+			DFTOut.write( S3Out[inputC].read());
+			//DFTOut[1].write( S3Out[inputC][1].read());
+			//DFTOut[2].write( S3Out[inputC][2].read());
 		}
 	}
 
 
 }
-void S3S4Mux_2 (hls::stream< t_recon_complex>  S3Out[2][3],
-			 	 hls::stream< t_recon_complex>  DFTOut[3]) {
+void S3S4Mux_2 (hls::stream< t_recon_complex>  S3Out[2],
+			 	 hls::stream< t_recon_complex>  &DFTOut) {
 
 #pragma HLS DATAFLOW
 #pragma HLS INLINE
