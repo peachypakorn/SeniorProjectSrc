@@ -95,23 +95,25 @@ typedef std::complex<data_out_t> cmpxDataOut;
 
 #define S 512
 
-template< typename config_f, typename Tin, int FFT_LENGTH,int LEN>
+template< typename config_f, typename Tin, int FFT_LENGTH>
 void dummy_proc_fe(
     bool direction,
 	hls::ip_fft::config_t<config_f> * config,
-    Tin in[LEN],
-    Tin out[LEN])
+    Tin in[FFT_LENGTH],
+    Tin out[FFT_LENGTH],
+	int m)
 {
-
+#pragma HLS INLINE
+#pragma HLS interface ap_fifo port=config
     int i;
     config->setDir(direction);
-    if(FFT_LENGTH == 256)config->setNfft(8);
-    else if(FFT_LENGTH == 128)config->setNfft(7);
-    else if(FFT_LENGTH == 64)config->setNfft(6);
+    if(m == 256)config->setNfft(8);
+    else if(m == 128)config->setNfft(7);
+    else if(m == 64)config->setNfft(6);
     else config->setNfft(9);
    // config->setNfft(log_size);
 //    config->setSch(0x2AB);
-    for (i=0; i< FFT_LENGTH; i++)
+    for (i=0; i< m; i++)
 
 //#pragma HLS INLINE
 out[i] = in[i];
@@ -150,24 +152,28 @@ void fft_top(
 #pragma HLS data_pack variable=in
 #pragma HLS data_pack variable=out
 #pragma HLS DATAFLOW
-	Tin  xx[FFT_LENGTH];
+	Tin  xn[FFT_LENGTH];
     Tout xk[FFT_LENGTH];
-#pragma HLS interface ap_fifo depth=FFT_LENGTH port=xx
-#pragma HLS data_pack variable=xx
+#pragma HLS INTERFACE ap_fifo port=xn
+#pragma HLS data_pack variable=xn
 #pragma HLS data_pack variable=xk
-//#pragma HLS STREAM variable=xx depth=512 dim=1
+//#pragma HLS STREAM variable=xn depth=512 dim=1
 //#pragma HLS STREAM variable=xk depth=512 dim=1
     hls::ip_fft::config_t<config_f> fft_config;
+//#pragma HLS FUNCTION_INSTANTIATE variable=fft_config
+
+#pragma HLS DATA_PACK variable=fft_config
 //#pragma HLS DATA_PACK variable=fft_config
     hls::ip_fft::status_t<config_f> fft_status;
 #pragma HLS interface ap_fifo port=fft_config.data
-
-    if(length==512)		dummy_proc_fe<config_f, Tin, 512,FFT_LENGTH>(direction, &fft_config, in, xx);
-    else if(length==256)dummy_proc_fe<config_f, Tin, 256,FFT_LENGTH>(direction, &fft_config, in, xx);
-    else if(length==128)dummy_proc_fe<config_f, Tin, 128,FFT_LENGTH>(direction, &fft_config, in, xx);
-    else 				dummy_proc_fe<config_f, Tin, 64,FFT_LENGTH>(direction, &fft_config, in, xx);
+    int m;
+    if(length==512)	m=512;
+    else if(length==256)m = 256; //dummy_proc_fe<config_f, Tin, 256,FFT_LENGTH>(direction, &fft_config, in, xn);
+    else if(length==128)m = 128; //dummy_proc_fe<config_f, Tin, 128,FFT_LENGTH>(direction, &fft_config, in, xn);
+    else m  = 64;				 //dummy_proc_fe<config_f, Tin, 64,FFT_LENGTH>(direction, &fft_config, in, xn);
+    dummy_proc_fe<config_f, Tin, FFT_LENGTH>(direction, &fft_config, in, xn,m);
     // FFT IP
-    hls::fft<config_f>(xx, xk, &fft_status, &fft_config);
+    hls::fft<config_f>(xn, xk, &fft_status, &fft_config);
     dummy_proc_be<config_f, Tout, 512>(&fft_status, ovflo, xk, out);
    // else if(length==256) dummy_proc_be<config_f, Tout, 256>(&fft_status, ovflo, xk, out);
     //else if(length==128) dummy_proc_be<config_f, Tout, 128>(&fft_status, ovflo, xk, out);
